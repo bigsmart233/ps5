@@ -251,39 +251,7 @@ growth <- data_2019 %>%
 growth
 ```
 
-```{r,echo=FALSE}
-data_1960 <- gap %>% filter(time == 1960)
-data_2019 <- gap %>% filter(time == 2019)
 
-
-hist_1960 <- ggplot(data_1960, aes(x = GDP_PC)) +
-  geom_histogram(aes(y=..density..), fill = "blue", alpha = 0.5, bins = 20) +
-  ggtitle("GDP per capita in 1960") +
-  xlab("GDP per capita") +
-  ylab("Density")
-
-hist_2019 <- ggplot(data_2019, aes(x = GDP_PC)) +
-  geom_histogram(aes(y=..density..), fill = "red", alpha = 0.5, bins = 20) +
-  ggtitle("GDP per capita in 2019") +
-  xlab("GDP per capita") +
-  ylab("Density")
-
-
-combined_hists <- ggplot() + 
-  facet_wrap(~time, ncol = 2, scales = "free_x") +
-  theme(strip.text.x = element_blank(), strip.background = element_blank()) +
-  annotation_custom(grob = grid::textGrob("Density"), 
-                    xmin = Inf, xmax = Inf, ymin = Inf, ymax = Inf) +
-  annotation_custom(grob = grid::textGrob("GDP per capita"), 
-                    xmin = Inf, xmax = Inf, ymin = Inf, ymax = Inf, angle = 270) +
-  annotation_custom(grob = grid::rectGrob(gp = grid::gpar(fill = NA)), 
-                    xmin = -Inf, xmax = -Inf, ymin = -Inf, ymax = -Inf) +
-  hist_1960 + 
-  hist_2019
-
-
-print(combined_hists)
-```
 
 In 1960, the US ranked 17th in terms of life expectancy, while in 2019 it ranked 43rd.
 
@@ -295,7 +263,6 @@ rank_rel <- function(df) {
 }
 
 rel_rank <- data_us %>% group_by(time) %>% summarise(rank = rank_rel(.))
-
 
 rel_rank
 ```
