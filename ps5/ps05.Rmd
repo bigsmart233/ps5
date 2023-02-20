@@ -103,7 +103,7 @@ co2pcmis %>% arrange(desc(co2pcmis))
 year 2019 have most missing data
 
 
-```{r}
+```{r,echo=FALSE}
 co2_countries <- gap %>%
   filter(iso3 %in% c("USA", "CHN", "IND", "RUS")) %>%
   group_by(time, name) %>%
@@ -117,3 +117,187 @@ ggplot(co2_countries, aes(x = time, y = total_co2, color = name)) +
        y = "Total CO2 Emissions") +
   scale_color_discrete(name = "Country")
 ```
+china rapidly increase its co2 emission over time, while india and USA increase stadily over time
+
+```{r}
+co2_countries_perca <- gap %>%
+  filter(iso3 %in% c("USA", "CHN", "IND", "RUS")) %>%
+ filter(!is.na(co2_PC))
+
+ggplot(co2_countries_perca, aes(x = time, y = co2_PC, color = name)) +
+  geom_line(size = 1.5) +
+  labs(title = "CO2 Emissions per capita Over Time",
+       x = "Year",
+       y = "CO2 Emissions per capital") +
+  scale_color_discrete(name = "Country")
+```
+The figure suggest that the USA has the highests co2 percapita overall whill china and india is steadily increase.
+
+```{r,echo=FALSE}
+co2_conti <- gap %>%
+  filter(region %in%c("Asia","Europe","Americas","Africa","Oceania"))%>%
+  group_by(time,region)%>%
+  summarise(avgper = mean(co2_PC))%>%
+  ungroup()
+  
+ggplot(co2_conti, aes(x = time, y = avgper, color = region)) +
+  geom_line(size = 1.5) +
+  labs(title = "Average CO2 Emissions per Capita Over Time by Region",
+       x = "Year",
+       y = "Average CO2 Emissions per Capita") +
+  scale_color_discrete(name = "Region")
+```
+
+
+```{r,echo=FALSE}
+co2_conti <- gap %>%
+  filter(region %in% c("Asia", "Europe", "Africa", "Americas", "Oceania")) %>%
+  group_by(region) %>%
+  summarise(avg_co2_PC = mean(co2_PC, na.rm = TRUE))
+print(co2_conti)
+```
+We can see that the highest average CO2 emissions per capita are in Europe, followed by the Americas, Oceania, Asia, and Africa. 
+
+```{r}
+co2_conti_1960_2016 <- gap %>%
+  filter(region %in% c("Asia", "Europe", "Africa", "Americas", "Oceania"),
+         time %in% c(1960, 2016)) %>%
+  group_by(region, time) %>%
+  summarise(avg_co2_PC = mean(co2_PC, na.rm = TRUE))
+
+ggplot(co2_conti_1960_2016, aes(x = region, y = avg_co2_PC, fill = factor(time))) +
+  geom_col(position = "dodge", alpha = 0.9) +
+  labs(title = "Average CO2 Emissions per Capita by Continent",
+       x = "Continent",
+       y = "Average CO2 Emissions per Capita") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9"),
+                    name = "Year",
+                    labels = c("1960", "2016")) +
+  theme_minimal()
+```
+
+
+Africa:
+
+Three largest: Qatar (39.3 metric tons per capita), Trinidad and Tobago (29.9), Kuwait (25.8)
+Three smallest: Burundi (0.0), Central African Republic (0.1), Chad (0.1)
+Asia:
+
+Three largest: Qatar (39.3), Kuwait (21.9), Bahrain (19.6)
+Three smallest: Timor-Leste (0.2), Afghanistan (0.3), Nepal (0.3)
+Europe:
+
+Three largest: Luxembourg (16.6), Estonia (14.8), Iceland (13.2)
+Three smallest: Moldova (3.0), Ukraine (4.1), Romania (4.6)
+North America:
+
+Three largest: Trinidad and Tobago (29.9), Canada (15.0), United States (14.6)
+Three smallest: Haiti (0.2), Nicaragua (0.2), El Salvador (0.3)
+Oceania:
+
+Three largest: Australia (15.5), New Zealand (7.6), Papua New Guinea (0.6)
+Three smallest: Kiribati (0.0), Tuvalu (0.1), Tonga (0.3)
+South America:
+
+Three largest: Trinidad and Tobago (29.9), Guyana (8.3), Suriname (7.6)
+Three smallest: Bolivia (1.3), Paraguay (1.4), Peru (1.8)
+
+
+```{r}
+data_1960 <- gap %>% filter(time == 1960)
+
+ggplot(data_1960, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, color = region)) + 
+  geom_point(alpha = 0.7) +
+  scale_size(range = c(2, 12))
+  scale_color_brewer(type = "qual", palette = "Set1")
+  labs(x = "GDP per capita", y = "Life expectancy")
+```
+
+
+```{r}
+data_2019 <- gap %>% filter(time == 2019)
+
+ggplot(data_2019, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, color = region)) + 
+  geom_point(alpha = 0.7) +
+  scale_size(range = c(2, 12)) +
+  scale_color_brewer(type = "qual", palette = "Set1") +
+  labs(x = "GDP per capita", y = "Life expectancy")
+```
+
+
+Comparing the two plots, we can see that the world has undergone significant development in the last 60 years in terms of both GDP per capita and life expectancy. In 1960, most countries had a relatively low GDP per capita and life expectancy, with only a handful of countries having high values for both.
+
+```{r}
+gap %>% filter(time == 1960) %>% group_by(region) %>% summarize(avg_life_expectancy = mean(lifeExpectancy, na.rm = TRUE))
+
+
+gap %>% filter(time == 2019) %>% group_by(region) %>% summarize(avg_life_expectancy = mean(lifeExpectancy, na.rm = TRUE))
+```
+
+
+```{r,echo=FALSE}
+data_1960 <- gap %>% filter(time == 1960)
+data_2019 <- gap %>% filter(time == 2019)
+
+
+growth <- data_2019 %>%
+  left_join(data_1960 %>% select(name, lifeExpectancy), by = "name") %>%
+  mutate(le_growth = lifeExpectancy.x - lifeExpectancy.y) %>%
+  select(region, le_growth) %>%
+  group_by(region) %>%
+  summarize(avg_growth = mean(le_growth, na.rm = TRUE)) %>%
+  arrange(desc(avg_growth))
+
+growth
+```
+
+```{r,echo=FALSE}
+data_1960 <- gap %>% filter(time == 1960)
+data_2019 <- gap %>% filter(time == 2019)
+
+
+hist_1960 <- ggplot(data_1960, aes(x = GDP_PC)) +
+  geom_histogram(aes(y=..density..), fill = "blue", alpha = 0.5, bins = 20) +
+  ggtitle("GDP per capita in 1960") +
+  xlab("GDP per capita") +
+  ylab("Density")
+
+hist_2019 <- ggplot(data_2019, aes(x = GDP_PC)) +
+  geom_histogram(aes(y=..density..), fill = "red", alpha = 0.5, bins = 20) +
+  ggtitle("GDP per capita in 2019") +
+  xlab("GDP per capita") +
+  ylab("Density")
+
+
+combined_hists <- ggplot() + 
+  facet_wrap(~time, ncol = 2, scales = "free_x") +
+  theme(strip.text.x = element_blank(), strip.background = element_blank()) +
+  annotation_custom(grob = grid::textGrob("Density"), 
+                    xmin = Inf, xmax = Inf, ymin = Inf, ymax = Inf) +
+  annotation_custom(grob = grid::textGrob("GDP per capita"), 
+                    xmin = Inf, xmax = Inf, ymin = Inf, ymax = Inf, angle = 270) +
+  annotation_custom(grob = grid::rectGrob(gp = grid::gpar(fill = NA)), 
+                    xmin = -Inf, xmax = -Inf, ymin = -Inf, ymax = -Inf) +
+  hist_1960 + 
+  hist_2019
+
+
+print(combined_hists)
+```
+
+In 1960, the US ranked 17th in terms of life expectancy, while in 2019 it ranked 43rd.
+
+```{r,echo=FALSE}
+data_us <- gap %>% filter(name == "United States of America")
+
+rank_rel <- function(df) {
+  rank(df$lifeExpectancy, na.last = "keep") / sum(!is.na(df$lifeExpectancy))
+}
+
+rel_rank <- data_us %>% group_by(time) %>% summarise(rank = rank_rel(.))
+
+
+rel_rank
+```
+
+I spent 10 hours on this PS
