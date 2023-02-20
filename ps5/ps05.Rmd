@@ -5,4 +5,115 @@ date: "2023-02-20"
 output: html_document
 ---
 
-sas
+part1. Load
+
+
+```{r, message=FALSE}
+library(tidyverse)
+gap <- read_delim("gapminder.csv")
+```
+
+The _gap_ data contains `r nrow(gap)` rows and `r ncol(gap)` columns.
+
+Example of gap data :
+```{r, echo=FALSE}
+gap %>%
+  sample_n(10)
+```
+
+part2.Descriptive
+
+countries in the data set,for each number, is corresponding to name, iso3, iso2
+
+```{r, echo=FALSE}
+gap%>%
+  distinct(name)%>%
+  nrow()
+
+gap%>%
+  distinct(iso3)%>%
+  nrow()
+
+gap%>%
+  distinct(iso2)%>%
+  nrow()
+```
+
+```{r}
+names_periso2 <- gap %>%
+  group_by(iso2)%>%
+  summarise(name_count = n_distinct(name))
+
+
+multi_name_iso2 <- names_periso2 %>%
+  filter(name_count > 1)
+
+if (nrow(multi_name_iso2) > 0) {
+  cat("The following iso-2 codes correspond to more than one name:\n")
+  print(multi_name_iso2)
+} else {
+  cat("No iso-2 codes correspond to more than one name.\n")
+}
+
+print(names_periso2)
+```
+
+```{r,echo=FALSE}
+names_periso3 <- gap %>%
+  group_by(iso3)%>%
+  summarise(name_count = n_distinct(name))
+
+
+multi_name_iso3 <- names_periso3 %>%
+  filter(name_count > 1)
+
+if (nrow(multi_name_iso3) > 0) {
+  cat("The following iso-3 codes correspond to more than one name:\n")
+  print(multi_name_iso3)
+} else {
+  cat("No iso-3 codes correspond to more than one name.\n")
+}
+
+print(names_periso3)
+```
+
+```{r}
+min_year <- min(gap$time, na.rm = TRUE)
+max_year <- max(gap$time, na.rm = TRUE)
+cat("minyear is",min_year,"maxyear is", max_year)
+```
+3.co2 emissions
+```{r,echo=FALSE}
+co2mis <- gap %>%
+  group_by(time)%>%
+  summarise(missing_count = sum(is.na(co2)))
+  
+
+co2pcmis <- gap %>%
+  group_by(time)%>%
+  summarise(missing_count = sum(is.na(co2_PC)))
+  
+co2mis %>% arrange(desc(co2mis))
+
+
+co2pcmis %>% arrange(desc(co2pcmis))
+  
+```
+
+year 2019 have most missing data
+
+
+```{r}
+co2_countries <- gap %>%
+  filter(iso3 %in% c("USA", "CHN", "IND", "RUS")) %>%
+  group_by(time, name) %>%
+  summarize(total_co2 = sum(co2)) %>%
+  ungroup()
+
+ggplot(co2_countries, aes(x = time, y = total_co2, color = name)) +
+  geom_line(size = 1.5) +
+  labs(title = "Total CO2 Emissions Over Time",
+       x = "Year",
+       y = "Total CO2 Emissions") +
+  scale_color_discrete(name = "Country")
+```
